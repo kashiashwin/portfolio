@@ -1,13 +1,14 @@
 /**
  * Procedural Web Audio API Sound Synthesizer for 3D Cosmic Zoom.
- * Generates a crisp, futuristic "Whoosh / Space Warp" sound effect without any external asset dependencies.
+ * Generates an epic, futuristic "Space Warp / Hyperdrive Whoosh" sound effect without external audio files.
  */
 
 let audioCtx = null;
 let lastScrollY = window.scrollY;
 let lastSoundTime = 0;
+let soundEnabled = true;
 
-function unlockAudioContext() {
+export function getAudioContext() {
   if (!audioCtx) {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (AudioContextClass) {
@@ -17,9 +18,10 @@ function unlockAudioContext() {
   if (audioCtx && audioCtx.state === 'suspended') {
     audioCtx.resume();
   }
+  return audioCtx;
 }
 
-// Generate procedural white noise buffer for whoosh physics
+// Generate procedural white noise buffer for whoosh air physics
 function createNoiseBuffer(ctx, duration = 0.5) {
   const bufferSize = ctx.sampleRate * duration;
   const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -32,63 +34,86 @@ function createNoiseBuffer(ctx, duration = 0.5) {
 }
 
 /**
- * Triggers a procedural sci-fi whoosh sound effect based on scroll velocity
+ * Triggers an epic sci-fi whoosh sound effect on scroll zoom
  */
 export function playWhooshSound(intensity = 1.0) {
-  unlockAudioContext();
-  if (!audioCtx) return;
+  if (!soundEnabled) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
 
   const now = Date.now();
-  // Throttle whoosh sound (min 150ms gap) for smooth playback
-  if (now - lastSoundTime < 150) return;
+  if (now - lastSoundTime < 140) return;
   lastSoundTime = now;
 
   try {
-    const duration = 0.4 + Math.min(intensity * 0.2, 0.3);
-    const noiseBuffer = createNoiseBuffer(audioCtx, duration);
-    const noiseSource = audioCtx.createBufferSource();
+    const duration = 0.45 + Math.min(intensity * 0.25, 0.35);
+    const startTime = ctx.currentTime;
+
+    // 1. White Noise Bandpass Filter Sweep (Air Whoosh)
+    const noiseBuffer = createNoiseBuffer(ctx, duration);
+    const noiseSource = ctx.createBufferSource();
     noiseSource.buffer = noiseBuffer;
 
-    // Bandpass Filter Sweep for "Whoosh" resonance
-    const filter = audioCtx.createBiquadFilter();
+    const filter = ctx.createBiquadFilter();
     filter.type = 'bandpass';
-    filter.Q.value = 2.5;
+    filter.Q.value = 2.0;
+    filter.frequency.setValueAtTime(140, startTime);
+    filter.frequency.exponentialRampToValueAtTime(2800 * Math.max(intensity, 0.9), startTime + duration * 0.45);
+    filter.frequency.exponentialRampToValueAtTime(80, startTime + duration);
 
-    // Sweep filter frequency from 150Hz up to 2400Hz and back down to 100Hz
-    const startTime = audioCtx.currentTime;
-    filter.frequency.setValueAtTime(150, startTime);
-    filter.frequency.exponentialRampToValueAtTime(2400 * Math.max(intensity, 0.8), startTime + duration * 0.4);
-    filter.frequency.exponentialRampToValueAtTime(90, startTime + duration);
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.01, startTime);
+    noiseGain.gain.linearRampToValueAtTime(0.55 * Math.min(intensity, 1.3), startTime + duration * 0.35);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
 
-    // Sub-bass Sine Oscillator for deep cosmic rumble impact
-    const subOsc = audioCtx.createOscillator();
+    noiseSource.connect(filter);
+    filter.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+
+    // 2. Sci-Fi Pitch Glide Oscillator (Hyperdrive Sci-Fi Sound)
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(90, startTime);
+    osc.frequency.exponentialRampToValueAtTime(480 * Math.max(intensity, 0.8), startTime + duration * 0.4);
+    osc.frequency.exponentialRampToValueAtTime(60, startTime + duration);
+
+    const oscFilter = ctx.createBiquadFilter();
+    oscFilter.type = 'lowpass';
+    oscFilter.frequency.setValueAtTime(800, startTime);
+
+    const oscGain = ctx.createGain();
+    oscGain.gain.setValueAtTime(0.01, startTime);
+    oscGain.gain.linearRampToValueAtTime(0.25 * Math.min(intensity, 1.1), startTime + duration * 0.3);
+    oscGain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+    osc.connect(oscFilter);
+    oscFilter.connect(oscGain);
+    oscGain.connect(ctx.destination);
+
+    // 3. Sub-Bass Deep Impulse Rumble
+    const subOsc = ctx.createOscillator();
     subOsc.type = 'sine';
-    subOsc.frequency.setValueAtTime(160, startTime);
-    subOsc.frequency.exponentialRampToValueAtTime(50, startTime + duration);
+    subOsc.frequency.setValueAtTime(150, startTime);
+    subOsc.frequency.exponentialRampToValueAtTime(40, startTime + duration);
 
-    const subGain = audioCtx.createGain();
-    subGain.gain.setValueAtTime(0.4 * intensity, startTime);
+    const subGain = ctx.createGain();
+    subGain.gain.setValueAtTime(0.45 * intensity, startTime);
     subGain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
 
     subOsc.connect(subGain);
-    subGain.connect(audioCtx.destination);
-    subOsc.start(startTime);
-    subOsc.stop(startTime + duration);
+    subGain.connect(ctx.destination);
 
-    // Master Volume Envelope (Increased gain for clear audibility)
-    const gainNode = audioCtx.createGain();
-    gainNode.gain.setValueAtTime(0.01, startTime);
-    gainNode.gain.linearRampToValueAtTime(0.65 * Math.min(intensity, 1.2), startTime + duration * 0.3);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-
-    noiseSource.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-
+    // Start all procedural sound nodes
     noiseSource.start(startTime);
     noiseSource.stop(startTime + duration);
+
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+
+    subOsc.start(startTime);
+    subOsc.stop(startTime + duration);
   } catch (err) {
-    // Ignore audio autoplay restrictions gracefully
+    // Ignore audio restrictions
   }
 }
 
@@ -99,42 +124,40 @@ export function initAudioScrollTrigger() {
     if (zoomSpace) {
       const rect = zoomSpace.getBoundingClientRect();
       if (rect.bottom > 0 && rect.top < window.innerHeight) {
-        const intensity = Math.min(Math.max(delta / 20, 0.8), 1.5);
+        const intensity = Math.min(Math.max(delta / 18, 0.8), 1.5);
         playWhooshSound(intensity);
       }
     }
   };
 
+  // Immediate event listeners to unlock Web Audio API Context
+  const unlock = () => getAudioContext();
+
+  ['click', 'touchstart', 'pointerdown', 'keydown', 'wheel', 'scroll'].forEach((evt) => {
+    window.addEventListener(evt, unlock, { passive: true });
+  });
+
   // Scroll listener
   window.addEventListener('scroll', () => {
-    unlockAudioContext();
     const currentScrollY = window.scrollY;
     const delta = Math.abs(currentScrollY - lastScrollY);
     lastScrollY = currentScrollY;
 
-    if (delta > 3) {
+    if (delta > 2) {
       triggerCheck(delta);
     }
   }, { passive: true });
 
-  // Mouse wheel listener (triggers instantly when trackpad/mouse is scrolled)
+  // Mouse wheel listener (triggers instantly when trackpad or mouse wheel moves)
   window.addEventListener('wheel', (e) => {
-    unlockAudioContext();
     const delta = Math.abs(e.deltaY);
-    if (delta > 3) {
+    if (delta > 2) {
       triggerCheck(delta);
     }
   }, { passive: true });
 
   // Touch move listener (mobile swipe)
   window.addEventListener('touchmove', () => {
-    unlockAudioContext();
     triggerCheck(15);
   }, { passive: true });
-
-  // Unlock AudioContext on any user interaction
-  const unlockEvents = ['click', 'touchstart', 'keydown', 'pointerdown'];
-  unlockEvents.forEach((evt) => {
-    window.addEventListener(evt, unlockAudioContext, { once: false, passive: true });
-  });
 }
