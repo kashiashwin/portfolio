@@ -243,7 +243,7 @@ export function createAccretionDiskTexture() {
   });
 }
 
-// 9. Procedural Textures for Solar System Planets
+// 9. Procedural Textures for Solar System Planets (Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto)
 export function createPlanetTexture(type) {
   return createTextureFromCanvas(512, 256, (ctx, w, h) => {
     if (type === 'mercury') {
@@ -309,6 +309,14 @@ export function createPlanetTexture(type) {
       grad.addColorStop(1, '#112c6e');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, w, h);
+    } else if (type === 'pluto') {
+      ctx.fillStyle = '#b89476';
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#e8d2b8';
+      // Heart-shaped Tombaugh Regio
+      ctx.beginPath();
+      ctx.arc(w * 0.45, h * 0.5, 30, 0, Math.PI * 2);
+      ctx.fill();
     }
   });
 }
