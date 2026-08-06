@@ -12,7 +12,7 @@ import {
 } from './proceduralTextures.js';
 
 let universeSphere, glowSphere;
-let starField, distantGalaxiesGroup, spiralGalaxyGroup, mwClustersGroup, solarClusterGroup, sunMesh;
+let starField, distantGalaxiesGroup, spiralGalaxyGroup, mwClustersGroup, solarClusterGroup, sunMesh, sunCoronaMesh;
 let sagitariusAGroup, sagitariusAMesh, accretionDiskMesh, centerLightDiskMesh;
 let mercuryMesh, venusMesh, earthGroup, earthMesh, cloudMesh, moonMesh;
 let marsMesh, jupiterMesh, saturnGroup, saturnMesh, uranusMesh, neptuneMesh, plutoMesh;
@@ -360,20 +360,33 @@ export function buildCosmicScene(scene) {
   // 4. SOLAR NEIGHBORHOOD STAR CLUSTER & COMPLETE SOLAR SYSTEM (All 8 Planets + Moon + Pluto)
   // -------------------------------------------------------------
 
-  // Solar Neighborhood Cluster (Positioned at Z = -750)
+  // Solar Neighborhood Cluster (Centered along camera path at Z = -750)
   solarClusterGroup = new THREE.Group();
-  solarClusterGroup.position.set(45, 20, -750);
+  solarClusterGroup.position.set(0, 0, -750);
   const solarClusterPoints = create3DStarCluster(900, 80, 0x38bdf8);
   solarClusterGroup.add(solarClusterPoints);
   solarClusterGroup.visible = false; // Hidden until cameraZ < -650
   scene.add(solarClusterGroup);
   
-  // A. Sun (Z = -920) — STRICTLY LOADS ONLY AFTER MOVING FORWARD PAST THE CLUSTER (cameraZ < -860)
-  const sunGeo = new THREE.SphereGeometry(26, 32, 32);
+  // A. Sun (Perfectly Centered at Z = -920 to prevent viewport clipping)
+  const sunGeo = new THREE.SphereGeometry(24, 32, 32);
   const sunTex = createSunTexture();
   const sunMat = new THREE.MeshBasicMaterial({ map: sunTex });
   sunMesh = new THREE.Mesh(sunGeo, sunMat);
-  sunMesh.position.set(45, 20, -920);
+  sunMesh.position.set(0, 0, -920);
+
+  // Outer Glowing Sun Corona Atmosphere
+  const sunCoronaGeo = new THREE.SphereGeometry(27, 32, 32);
+  const sunCoronaMat = new THREE.MeshBasicMaterial({
+    color: 0xffaa00,
+    transparent: true,
+    opacity: 0.4,
+    side: THREE.BackSide,
+    blending: THREE.AdditiveBlending,
+  });
+  sunCoronaMesh = new THREE.Mesh(sunCoronaGeo, sunCoronaMat);
+  sunMesh.add(sunCoronaMesh);
+
   sunMesh.visible = false;
   scene.add(sunMesh);
 
@@ -383,7 +396,7 @@ export function buildCosmicScene(scene) {
     new THREE.SphereGeometry(5, 32, 32),
     new THREE.MeshStandardMaterial({ map: mercuryTex, roughness: 0.8 })
   );
-  mercuryMesh.position.set(15, -8, -980);
+  mercuryMesh.position.set(12, -4, -980);
   mercuryMesh.visible = false;
   scene.add(mercuryMesh);
 
@@ -393,11 +406,11 @@ export function buildCosmicScene(scene) {
     new THREE.SphereGeometry(9, 32, 32),
     new THREE.MeshStandardMaterial({ map: venusTex, roughness: 0.5 })
   );
-  venusMesh.position.set(-30, 12, -1040);
+  venusMesh.position.set(-18, 6, -1040);
   venusMesh.visible = false;
   scene.add(venusMesh);
 
-  // D. Earth & Moon Group (Planet 3, Z = -1150) — STRICTLY LOADS ONLY AFTER PASSING THE SUN (cameraZ < -1000)
+  // D. Earth & Moon Group (Planet 3, Z = -1150) — Centered in camera field
   earthGroup = new THREE.Group();
   earthGroup.position.set(0, 0, -1150);
 
@@ -463,7 +476,7 @@ export function buildCosmicScene(scene) {
     new THREE.SphereGeometry(8, 32, 32),
     new THREE.MeshStandardMaterial({ map: marsTex, roughness: 0.7 })
   );
-  marsMesh.position.set(38, -15, -1270);
+  marsMesh.position.set(28, -10, -1270);
   marsMesh.visible = false;
   scene.add(marsMesh);
 
@@ -473,13 +486,13 @@ export function buildCosmicScene(scene) {
     new THREE.SphereGeometry(32, 64, 64),
     new THREE.MeshStandardMaterial({ map: jupiterTex, roughness: 0.5 })
   );
-  jupiterMesh.position.set(-70, 25, -1400);
+  jupiterMesh.position.set(-50, 18, -1400);
   jupiterMesh.visible = false;
   scene.add(jupiterMesh);
 
   // G. Saturn & Rings (Planet 6, Z = -1550)
   saturnGroup = new THREE.Group();
-  saturnGroup.position.set(65, -30, -1550);
+  saturnGroup.position.set(45, -20, -1550);
 
   const saturnTex = createPlanetTexture('saturn');
   saturnMesh = new THREE.Mesh(
@@ -509,7 +522,7 @@ export function buildCosmicScene(scene) {
     new THREE.SphereGeometry(15, 32, 32),
     new THREE.MeshStandardMaterial({ map: uranusTex, roughness: 0.4 })
   );
-  uranusMesh.position.set(-45, -20, -1680);
+  uranusMesh.position.set(-35, -15, -1680);
   uranusMesh.visible = false;
   scene.add(uranusMesh);
 
@@ -519,7 +532,7 @@ export function buildCosmicScene(scene) {
     new THREE.SphereGeometry(14, 32, 32),
     new THREE.MeshStandardMaterial({ map: neptuneTex, roughness: 0.4 })
   );
-  neptuneMesh.position.set(50, 15, -1800);
+  neptuneMesh.position.set(40, 10, -1800);
   neptuneMesh.visible = false;
   scene.add(neptuneMesh);
 
@@ -529,7 +542,7 @@ export function buildCosmicScene(scene) {
     new THREE.SphereGeometry(4.5, 32, 32),
     new THREE.MeshStandardMaterial({ map: plutoTex, roughness: 0.9 })
   );
-  plutoMesh.position.set(-25, 8, -1920);
+  plutoMesh.position.set(-20, 6, -1920);
   plutoMesh.visible = false;
   scene.add(plutoMesh);
 
