@@ -1,14 +1,16 @@
 /**
  * Renders an interactive, animated 2D Canvas Radar Chart & Skill Matrix.
- * Distinguishes high proficiency in Python (95%) from C (70%), C++ (75%), and Java (68%).
+ * Highlights Python (95%), HTML5/CSS3 (90%), JavaScript (88%), C (70%), C++ (75%), Java (68%), SQL (80%), and Assembly (45%).
  */
 
 const skillData = [
   { label: 'Python (Primary)', score: 0.95, color: '#00f0ff', isPrimary: true },
+  { label: 'HTML5 / CSS3', score: 0.90, color: '#38bdf8', isPrimary: false },
+  { label: 'JavaScript (ES6+)', score: 0.88, color: '#facc15', isPrimary: false },
   { label: 'C Language', score: 0.70, color: '#818cf8', isPrimary: false },
   { label: 'C++', score: 0.75, color: '#a855f7', isPrimary: false },
   { label: 'Java', score: 0.68, color: '#f43f5e', isPrimary: false },
-  { label: 'JavaScript / Web', score: 0.88, color: '#38bdf8', isPrimary: false },
+  { label: 'Assembly (x86)', score: 0.45, color: '#fb923c', isPrimary: false },
   { label: 'SQL / Databases', score: 0.80, color: '#34d399', isPrimary: false },
 ];
 
@@ -36,7 +38,7 @@ export function initSkillsRadar() {
     const h = canvas.height;
     const cx = w / 2;
     const cy = h / 2;
-    const radius = (w / 2) * 0.72;
+    const radius = (w / 2) * 0.70;
     const numSkills = skillData.length;
 
     ctx.clearRect(0, 0, w, h);
@@ -74,11 +76,11 @@ export function initSkillsRadar() {
       ctx.stroke();
 
       // Axis Label Text
-      const labelDistance = radius + 28 * window.devicePixelRatio;
+      const labelDistance = radius + 26 * window.devicePixelRatio;
       const lx = cx + Math.cos(angle) * labelDistance;
       const ly = cy + Math.sin(angle) * labelDistance;
 
-      ctx.font = `${skill.isPrimary ? 'bold 14px' : '12px'} system-ui, sans-serif`;
+      ctx.font = `${skill.isPrimary ? 'bold 13px' : '11px'} system-ui, sans-serif`;
       ctx.fillStyle = skill.isPrimary ? '#00f0ff' : '#94a3b8';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';

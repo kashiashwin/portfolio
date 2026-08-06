@@ -8,12 +8,51 @@ import {
   createMoonTexture,
   createPlanetTexture,
   createSaturnRingTexture,
+  createAccretionDiskTexture,
 } from './proceduralTextures.js';
 
 let universeSphere, glowSphere;
-let starField, distantGalaxiesGroup, spiralGalaxyGroup, sunMesh;
+let starField, distantGalaxiesGroup, spiralGalaxyGroup, solarClusterGroup, sunMesh;
+let sagitariusAGroup, sagitariusAMesh, accretionDiskMesh, jetNorthMesh, jetSouthMesh;
 let mercuryMesh, venusMesh, earthGroup, earthMesh, cloudMesh, moonMesh;
 let marsMesh, jupiterMesh, saturnGroup, saturnMesh, uranusMesh, neptuneMesh;
+
+// Helper: Create 3D Star Cluster Particle Mesh
+function create3DStarCluster(particleCount = 500, radius = 25, colorHex = 0x00f0ff) {
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(particleCount * 3);
+  const colors = new Float32Array(particleCount * 3);
+  const baseColor = new THREE.Color(colorHex);
+
+  for (let i = 0; i < particleCount; i++) {
+    const r = Math.pow(Math.random(), 2) * radius;
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+
+    pos[i * 3] = Math.sin(phi) * Math.cos(theta) * r;
+    pos[i * 3 + 1] = Math.sin(phi) * Math.sin(theta) * r;
+    pos[i * 3 + 2] = Math.cos(phi) * r;
+
+    const alpha = 1 - r / radius;
+    colors[i * 3] = baseColor.r * (0.7 + alpha * 0.3);
+    colors[i * 3 + 1] = baseColor.g * (0.7 + alpha * 0.3);
+    colors[i * 3 + 2] = baseColor.b * (0.7 + alpha * 0.3);
+  }
+
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+  const mat = new THREE.PointsMaterial({
+    size: 2.2,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.9,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+
+  return new THREE.Points(geo, mat);
+}
 
 // Helper: Create 3D Elliptical Galaxy Particle Mesh
 function create3DEllipticalGalaxy(colorHex = 0xffd700, radius = 40, particleCount = 1200) {
@@ -23,17 +62,14 @@ function create3DEllipticalGalaxy(colorHex = 0xffd700, radius = 40, particleCoun
   const baseColor = new THREE.Color(colorHex);
 
   for (let i = 0; i < particleCount; i++) {
-    // Concentrated core distribution
     const r = Math.pow(Math.random(), 2.5) * radius;
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.acos(2 * Math.random() - 1);
 
-    // Ellipsoid stretch
     pos[i * 3] = Math.sin(phi) * Math.cos(theta) * r * 1.4;
     pos[i * 3 + 1] = Math.sin(phi) * Math.sin(theta) * r * 0.8;
     pos[i * 3 + 2] = Math.cos(phi) * r * 0.9;
 
-    // Golden / red core fading to white halo
     const alpha = 1 - r / radius;
     colors[i * 3] = baseColor.r * (0.6 + alpha * 0.4);
     colors[i * 3 + 1] = baseColor.g * (0.6 + alpha * 0.4);
@@ -119,83 +155,82 @@ export function buildCosmicScene(scene) {
   // Outer Glowing Atmosphere Aura
   const glowGeo = new THREE.SphereGeometry(37, 64, 64);
   const glowMat = new THREE.MeshBasicMaterial({
-    color: 0x6366f1,
+    color: 0x00f0ff,
     transparent: true,
-    opacity: 0.35,
+    opacity: 0.25,
     side: THREE.BackSide,
     blending: THREE.AdditiveBlending,
   });
   glowSphere = new THREE.Mesh(glowGeo, glowMat);
-  glowSphere.position.copy(universeSphere.position);
+  glowSphere.position.set(0, 0, 180);
   scene.add(glowSphere);
 
+  // Deep Space Starfield Points (10,000 background stars)
   const starTex = createStarParticleTexture();
-
-  // -------------------------------------------------------------
-  // 2. DEEP SPACE: Galaxies & Clusters (ONLY VISIBLE AFTER ENTERING UNIVERSE Z < 120)
-  // -------------------------------------------------------------
-  const starCount = 14000;
+  const starCount = 10000;
   const starGeo = new THREE.BufferGeometry();
   const starPos = new Float32Array(starCount * 3);
   const starColors = new Float32Array(starCount * 3);
 
   for (let i = 0; i < starCount; i++) {
-    starPos[i * 3] = (Math.random() - 0.5) * 1500;
-    starPos[i * 3 + 1] = (Math.random() - 0.5) * 1500;
-    starPos[i * 3 + 2] = (Math.random() - 0.5) * 2400 - 300;
+    starPos[i * 3] = (Math.random() - 0.5) * 2000;
+    starPos[i * 3 + 1] = (Math.random() - 0.5) * 2000;
+    starPos[i * 3 + 2] = (Math.random() - 0.5) * 3000;
 
-    const colorChoice = Math.random();
-    if (colorChoice > 0.7) {
-      starColors[i * 3] = 0.2; starColors[i * 3 + 1] = 0.9; starColors[i * 3 + 2] = 1.0;
-    } else if (colorChoice > 0.4) {
-      starColors[i * 3] = 0.7; starColors[i * 3 + 1] = 0.3; starColors[i * 3 + 2] = 1.0;
-    } else {
-      starColors[i * 3] = 1.0; starColors[i * 3 + 1] = 1.0; starColors[i * 3 + 2] = 1.0;
-    }
+    const r = 0.5 + Math.random() * 0.5;
+    const g = 0.5 + Math.random() * 0.5;
+    const b = 0.8 + Math.random() * 0.2;
+    starColors[i * 3] = r;
+    starColors[i * 3 + 1] = g;
+    starColors[i * 3 + 2] = b;
   }
 
   starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
   starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
 
   const starMat = new THREE.PointsMaterial({
-    size: 2.2,
+    size: 2.8,
     map: starTex,
     vertexColors: true,
     transparent: true,
-    opacity: 0.85,
+    opacity: 0.9,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
+
   starField = new THREE.Points(starGeo, starMat);
-  starField.visible = false; // Strictly hidden initially
+  starField.visible = false; // Hidden until entering universe (cameraZ < 120)
   scene.add(starField);
 
-  // 3D REAL-LIFE GALAXY CLUSTERS & GALAXIES
+  // -------------------------------------------------------------
+  // 2. GALAXIES & CLUSTERS IN DEEP SPACE (Only visible AFTER Z < 120)
+  // -------------------------------------------------------------
   distantGalaxiesGroup = new THREE.Group();
 
-  // Cluster 1: Abell 1689 Galaxy Cluster (Z = 60, X = -140, Y = 50)
-  const abellCluster = new THREE.Group();
-  abellCluster.position.set(-140, 50, 60);
-  for (let i = 0; i < 6; i++) {
-    const miniGal = create3DEllipticalGalaxy(i % 2 === 0 ? 0xffbb44 : 0x00f0ff, 25, 600);
-    miniGal.position.set((Math.random() - 0.5) * 70, (Math.random() - 0.5) * 70, (Math.random() - 0.5) * 50);
-    abellCluster.add(miniGal);
-  }
-  distantGalaxiesGroup.add(abellCluster);
-
-  // Galaxy 2: Andromeda M31 Spiral Galaxy (Z = -60, X = 150, Y = -40)
-  const andromeda = create3DSpiralGalaxy(2, 0x38bdf8, 0xe879f9, 55, 2000);
-  andromeda.position.set(150, -40, -60);
+  // Galaxy 1: Andromeda M31 Spiral (Z = -220, X = -140, Y = 60)
+  const andromeda = create3DSpiralGalaxy(2, 0x00f0ff, 0xec4899, 65, 2500);
+  andromeda.position.set(-140, 60, -220);
   andromeda.rotation.x = Math.PI * 0.3;
   distantGalaxiesGroup.add(andromeda);
 
-  // Galaxy 3: Sombrero M104 Elliptical Galaxy (Z = -180, X = -130, Y = 60)
-  const sombrero = create3DEllipticalGalaxy(0xfef08a, 45, 1500);
-  sombrero.position.set(-130, 60, -180);
-  sombrero.rotation.x = Math.PI * 0.45;
+  // Galaxy 2: Sombrero M104 Elliptical Core (Z = -360, X = 150, Y = -80)
+  const sombrero = create3DEllipticalGalaxy(0xfbbf24, 45, 1800);
+  sombrero.position.set(150, -80, -360);
   distantGalaxiesGroup.add(sombrero);
 
-  // Cluster 4: Virgo Supercluster Nodes (Z = -290, X = 160, Y = 30)
+  // Galaxy Cluster 3: Abell 1689 Massive Cluster (Z = -480, X = -180, Y = -100)
+  const abellCluster = new THREE.Group();
+  abellCluster.position.set(-180, -100, -480);
+  for (let i = 0; i < 5; i++) {
+    const subGal = i % 2 === 0 
+      ? create3DSpiralGalaxy(2, 0xa855f7, 0x38bdf8, 25, 700)
+      : create3DEllipticalGalaxy(0xf59e0b, 20, 500);
+    subGal.position.set((Math.random() - 0.5) * 60, (Math.random() - 0.5) * 60, (Math.random() - 0.5) * 40);
+    abellCluster.add(subGal);
+  }
+  distantGalaxiesGroup.add(abellCluster);
+
+  // Galaxy Cluster 4: Virgo Supercluster Nodes (Z = -290, X = 160, Y = 30)
   const virgoCluster = new THREE.Group();
   virgoCluster.position.set(160, 30, -290);
   for (let i = 0; i < 7; i++) {
@@ -213,23 +248,23 @@ export function buildCosmicScene(scene) {
   triangulum.rotation.y = Math.PI * 0.2;
   distantGalaxiesGroup.add(triangulum);
 
-  distantGalaxiesGroup.visible = false; // Strictly hidden initially
+  distantGalaxiesGroup.visible = false;
   scene.add(distantGalaxiesGroup);
 
   // -------------------------------------------------------------
-  // 3. THE MILKY WAY (Spiral Galaxy at Z = -550)
+  // 3. THE MILKY WAY & SAGITTARIUS A* BLACK HOLE (Z = -550)
   // -------------------------------------------------------------
   spiralGalaxyGroup = new THREE.Group();
   spiralGalaxyGroup.position.set(0, 0, -550);
 
-  const galaxyParticles = 6000;
+  const galaxyParticles = 7500;
   const galaxyGeo = new THREE.BufferGeometry();
   const galaxyPos = new Float32Array(galaxyParticles * 3);
   const galaxyColors = new Float32Array(galaxyParticles * 3);
 
   const arms = 4;
   for (let i = 0; i < galaxyParticles; i++) {
-    const r = Math.pow(Math.random(), 2) * 180;
+    const r = Math.pow(Math.random(), 2) * 190;
     const spinAngle = r * 0.05;
     const armAngle = ((i % arms) * 2 * Math.PI) / arms;
 
@@ -265,13 +300,78 @@ export function buildCosmicScene(scene) {
   });
   const galaxyPoints = new THREE.Points(galaxyGeo, galaxyMat);
   spiralGalaxyGroup.add(galaxyPoints);
+
+  // DENSE STAR CLUSTERS INSIDE MILKY WAY ARMS
+  const mwClusters = [
+    { color: 0x00f0ff, r: 50, angle: 0.4 },
+    { color: 0xfbbf24, r: 85, angle: 1.8 },
+    { color: 0xec4899, r: 120, angle: 3.2 },
+    { color: 0x38bdf8, r: 150, angle: 4.6 },
+  ];
+  mwClusters.forEach(cl => {
+    const cluster = create3DStarCluster(400, 18, cl.color);
+    cluster.position.set(Math.cos(cl.angle) * cl.r, Math.sin(cl.angle) * cl.r, (Math.random() - 0.5) * 10);
+    spiralGalaxyGroup.add(cluster);
+  });
+
+  // SAGITTARIUS A* SUPERMASSIVE BLACK HOLE (Center of Milky Way)
+  sagitariusAGroup = new THREE.Group();
+
+  // Event Horizon Black Sphere
+  const bhGeo = new THREE.SphereGeometry(8, 32, 32);
+  const bhMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+  sagitariusAMesh = new THREE.Mesh(bhGeo, bhMat);
+  sagitariusAGroup.add(sagitariusAMesh);
+
+  // Accretion Disk Swirling Mesh
+  const accGeo = new THREE.RingGeometry(10, 32, 64);
+  const accTex = createAccretionDiskTexture();
+  const accMat = new THREE.MeshBasicMaterial({
+    map: accTex,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.9,
+    blending: THREE.AdditiveBlending,
+  });
+  accretionDiskMesh = new THREE.Mesh(accGeo, accMat);
+  accretionDiskMesh.rotation.x = Math.PI * 0.4;
+  sagitariusAGroup.add(accretionDiskMesh);
+
+  // Relativistic Plasma Jet Beams (North & South Poles)
+  const jetGeo = new THREE.CylinderGeometry(0.8, 12, 90, 32, 1, true);
+  const jetMat = new THREE.MeshBasicMaterial({
+    color: 0x00f0ff,
+    transparent: true,
+    opacity: 0.7,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+  });
+
+  jetNorthMesh = new THREE.Mesh(jetGeo, jetMat);
+  jetNorthMesh.position.y = 45;
+  sagitariusAGroup.add(jetNorthMesh);
+
+  jetSouthMesh = new THREE.Mesh(jetGeo, jetMat);
+  jetSouthMesh.position.y = -45;
+  jetSouthMesh.rotation.x = Math.PI;
+  sagitariusAGroup.add(jetSouthMesh);
+
+  spiralGalaxyGroup.add(sagitariusAGroup);
   spiralGalaxyGroup.rotation.x = Math.PI * 0.35;
   spiralGalaxyGroup.visible = false;
   scene.add(spiralGalaxyGroup);
 
   // -------------------------------------------------------------
-  // 4. SOLAR SYSTEM (Sun -> Mercury -> Venus -> Earth & Moon -> Mars -> Jupiter -> Saturn -> Uranus -> Neptune)
+  // 4. SOLAR NEIGHBORHOOD STAR CLUSTER & SOLAR SYSTEM
   // -------------------------------------------------------------
+
+  // Solar Neighborhood Cluster surrounding the Solar System (Z = -780)
+  solarClusterGroup = new THREE.Group();
+  solarClusterGroup.position.set(45, 20, -780);
+  const solarClusterPoints = create3DStarCluster(900, 80, 0x38bdf8);
+  solarClusterGroup.add(solarClusterPoints);
+  solarClusterGroup.visible = false;
+  scene.add(solarClusterGroup);
   
   // A. Sun (Z = -800)
   const sunGeo = new THREE.SphereGeometry(26, 32, 32);
@@ -359,7 +459,7 @@ export function buildCosmicScene(scene) {
   earthMesh.rotation.y = -lonRad - Math.PI / 2;
   earthMesh.rotation.x = -latRad;
 
-  earthGroup.visible = false; // Strictly hidden until after Sun
+  earthGroup.visible = false;
   scene.add(earthGroup);
 
   // E. Mars (Z = -1220)
@@ -434,6 +534,7 @@ export function buildCosmicScene(scene) {
     starField,
     distantGalaxiesGroup,
     spiralGalaxyGroup,
+    solarClusterGroup,
     sunMesh,
     mercuryMesh,
     venusMesh,
@@ -477,8 +578,15 @@ export function updateCosmicScene(time, cameraZ = 300) {
     spiralGalaxyGroup.rotation.z = time * 0.05;
   }
 
-  // 3. Solar System Sequential Visibility
-  // Sun appears first after Milky Way (cameraZ < -550)
+  // Sagittarius A* Black Hole Animation
+  if (accretionDiskMesh) accretionDiskMesh.rotation.z += 0.03;
+  if (jetNorthMesh) jetNorthMesh.scale.setScalar(1 + Math.sin(time * 6) * 0.08);
+  if (jetSouthMesh) jetSouthMesh.scale.setScalar(1 + Math.sin(time * 6) * 0.08);
+
+  // 3. Solar Neighborhood Cluster
+  if (solarClusterGroup) solarClusterGroup.visible = cameraZ < -450 && cameraZ > -950;
+
+  // 4. Solar System Sequential Visibility
   if (sunMesh) sunMesh.visible = cameraZ < -550;
   if (mercuryMesh) mercuryMesh.visible = cameraZ < -700;
   if (venusMesh) venusMesh.visible = cameraZ < -750;

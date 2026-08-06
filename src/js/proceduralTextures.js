@@ -212,7 +212,38 @@ export function createMoonTexture() {
   });
 }
 
-// 8. Procedural Textures for Solar System Planets
+// 8. Sagittarius A* Black Hole Accretion Disk Texture
+export function createAccretionDiskTexture() {
+  return createTextureFromCanvas(512, 512, (ctx, w, h) => {
+    const cx = w / 2;
+    const cy = h / 2;
+    ctx.clearRect(0, 0, w, h);
+
+    const grad = ctx.createRadialGradient(cx, cy, 30, cx, cy, w / 2);
+    grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    grad.addColorStop(0.15, 'rgba(0, 240, 255, 0.95)');
+    grad.addColorStop(0.4, 'rgba(251, 146, 60, 0.8)');
+    grad.addColorStop(0.7, 'rgba(239, 68, 68, 0.5)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, w / 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Accretion spiral swirls
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 6; i++) {
+      ctx.beginPath();
+      const startAngle = (i * Math.PI) / 3;
+      ctx.arc(cx, cy, 70 + i * 15, startAngle, startAngle + Math.PI);
+      ctx.stroke();
+    }
+  });
+}
+
+// 9. Procedural Textures for Solar System Planets
 export function createPlanetTexture(type) {
   return createTextureFromCanvas(512, 256, (ctx, w, h) => {
     if (type === 'mercury') {
@@ -282,7 +313,7 @@ export function createPlanetTexture(type) {
   });
 }
 
-// 9. Saturn Ring Texture
+// 10. Saturn Ring Texture
 export function createSaturnRingTexture() {
   return createTextureFromCanvas(512, 64, (ctx, w, h) => {
     ctx.clearRect(0, 0, w, h);
