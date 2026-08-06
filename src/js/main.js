@@ -3,6 +3,7 @@ import { buildCosmicScene, updateCosmicScene } from './cosmicScene.js';
 import { initScrollAnimation } from './scrollAnimation.js';
 import { initSkillsRadar } from './skillsRadar.js';
 import { initProjectsModal } from './projectsModal.js';
+import { initAudioScrollTrigger } from './audioEffect.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Initialize Three.js Setup
@@ -15,7 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // 3. Initialize GSAP ScrollTrigger Animation Timeline (Manual user scroll)
   initScrollAnimation(camera, sceneObjects);
 
-  // 4. Mobile Hamburger Menu Toggle & Sleek Animations
+  // 4. Initialize Web Audio API Whoosh Sound Effect on Scroll Zoom
+  initAudioScrollTrigger();
+
+  // 5. Mobile Hamburger Menu Toggle & Sleek Animations
   const menuBtn = document.getElementById('mobile-menu-btn');
   const mobileMenu = document.getElementById('mobile-menu');
   const line1 = document.getElementById('hamburger-line1');
@@ -58,63 +62,44 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Close menu when clicking any mobile nav link
-  document.querySelectorAll('.mobile-nav-link').forEach(link => {
-    link.addEventListener('click', () => {
-      toggleMobileMenu(false);
-    });
-  });
-
-  // Close menu when clicking outside
+  // Close menu on clicking outside or selecting links
   document.addEventListener('click', (e) => {
-    if (isMenuOpen && !mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+    if (isMenuOpen && mobileMenu && !mobileMenu.contains(e.target) && e.target !== menuBtn) {
       toggleMobileMenu(false);
     }
   });
 
-  // 5. Initialize Interactive UI Components
+  const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+  mobileNavLinks.forEach((link) => {
+    link.addEventListener('click', () => toggleMobileMenu(false));
+  });
+
+  // 6. Initialize Skills Radar Matrix
   initSkillsRadar();
+
+  // 7. Initialize Projects Modal Gallery
   initProjectsModal();
 
-  // 6. Contact Form Validation & Toast Notification
+  // 8. Contact Form Handler
   const contactForm = document.getElementById('contact-form');
   if (contactForm) {
     contactForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const name = document.getElementById('contact-name').value;
-      const email = document.getElementById('contact-email').value;
-
-      // Toast Feedback
-      const toast = document.createElement('div');
-      toast.className = 'fixed bottom-6 right-6 z-50 glass-panel border border-emerald-400/60 p-4 rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.3)] flex items-center gap-3 text-sm text-emerald-300 font-medium animate-bounce';
-      toast.innerHTML = `
-        <span class="text-xl">✅</span>
-        <div>
-          <span class="font-bold block">Message Sent Successfully!</span>
-          <span class="text-xs text-slate-300">Thank you ${name}. Ashwin will respond to ${email} shortly.</span>
-        </div>
-      `;
-      document.body.appendChild(toast);
-
+      alert(`Thank you ${name}! Your message has been sent successfully. Ashwin will get back to you shortly.`);
       contactForm.reset();
-      setTimeout(() => {
-        toast.remove();
-      }, 5000);
     });
   }
 
-  // 7. Three.js Animation Loop
+  // 9. Continuous WebGL Render Loop
   let clock = { getElapsedTime: () => performance.now() * 0.001 };
   function animate() {
     requestAnimationFrame(animate);
     const elapsedTime = clock.getElapsedTime();
 
-    // Update 3D scene breathing, particle movement, & camera Z visibility checks
+    // Pass camera Z position to control strict visibility states
     updateCosmicScene(elapsedTime, camera.position.z);
-
-    // Render Three.js frame
     renderer.render(scene, camera);
   }
-
   animate();
 });

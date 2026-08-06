@@ -12,8 +12,8 @@ import {
 } from './proceduralTextures.js';
 
 let universeSphere, glowSphere;
-let starField, distantGalaxiesGroup, spiralGalaxyGroup, solarClusterGroup, sunMesh;
-let sagitariusAGroup, sagitariusAMesh, accretionDiskMesh, jetNorthMesh, jetSouthMesh;
+let starField, distantGalaxiesGroup, spiralGalaxyGroup, mwClustersGroup, solarClusterGroup, sunMesh;
+let sagitariusAGroup, sagitariusAMesh, accretionDiskMesh, centerLightDiskMesh;
 let mercuryMesh, venusMesh, earthGroup, earthMesh, cloudMesh, moonMesh;
 let marsMesh, jupiterMesh, saturnGroup, saturnMesh, uranusMesh, neptuneMesh;
 
@@ -252,7 +252,7 @@ export function buildCosmicScene(scene) {
   scene.add(distantGalaxiesGroup);
 
   // -------------------------------------------------------------
-  // 3. THE MILKY WAY & SAGITTARIUS A* BLACK HOLE (Z = -550)
+  // 3. THE MILKY WAY & SAGITTARIUS A* LIGHT DISK (Z = -550)
   // -------------------------------------------------------------
   spiralGalaxyGroup = new THREE.Group();
   spiralGalaxyGroup.position.set(0, 0, -550);
@@ -301,7 +301,8 @@ export function buildCosmicScene(scene) {
   const galaxyPoints = new THREE.Points(galaxyGeo, galaxyMat);
   spiralGalaxyGroup.add(galaxyPoints);
 
-  // DENSE STAR CLUSTERS INSIDE MILKY WAY ARMS
+  // STAR CLUSTERS INSIDE MILKY WAY (Only visible AFTER zooming into Milky Way: cameraZ < -450)
+  mwClustersGroup = new THREE.Group();
   const mwClusters = [
     { color: 0x00f0ff, r: 50, angle: 0.4 },
     { color: 0xfbbf24, r: 85, angle: 1.8 },
@@ -311,50 +312,44 @@ export function buildCosmicScene(scene) {
   mwClusters.forEach(cl => {
     const cluster = create3DStarCluster(400, 18, cl.color);
     cluster.position.set(Math.cos(cl.angle) * cl.r, Math.sin(cl.angle) * cl.r, (Math.random() - 0.5) * 10);
-    spiralGalaxyGroup.add(cluster);
+    mwClustersGroup.add(cluster);
   });
+  mwClustersGroup.visible = false; // Strictly hidden until cameraZ < -450
+  spiralGalaxyGroup.add(mwClustersGroup);
 
-  // SAGITTARIUS A* SUPERMASSIVE BLACK HOLE (Center of Milky Way)
+  // SAGITTARIUS A* SUPERMASSIVE BLACK HOLE LIGHT DISK (Center of Galaxy)
   sagitariusAGroup = new THREE.Group();
 
-  // Event Horizon Black Sphere
-  const bhGeo = new THREE.SphereGeometry(8, 32, 32);
+  // Event Horizon Dark Center
+  const bhGeo = new THREE.SphereGeometry(6, 32, 32);
   const bhMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
   sagitariusAMesh = new THREE.Mesh(bhGeo, bhMat);
   sagitariusAGroup.add(sagitariusAMesh);
 
-  // Accretion Disk Swirling Mesh
-  const accGeo = new THREE.RingGeometry(10, 32, 64);
+  // Bright Center Light Disk Ring
+  const accGeo = new THREE.RingGeometry(7, 36, 64);
   const accTex = createAccretionDiskTexture();
   const accMat = new THREE.MeshBasicMaterial({
     map: accTex,
     side: THREE.DoubleSide,
     transparent: true,
-    opacity: 0.9,
+    opacity: 0.95,
     blending: THREE.AdditiveBlending,
   });
   accretionDiskMesh = new THREE.Mesh(accGeo, accMat);
-  accretionDiskMesh.rotation.x = Math.PI * 0.4;
   sagitariusAGroup.add(accretionDiskMesh);
 
-  // Relativistic Plasma Jet Beams (North & South Poles)
-  const jetGeo = new THREE.CylinderGeometry(0.8, 12, 90, 32, 1, true);
-  const jetMat = new THREE.MeshBasicMaterial({
+  // Glowing Lensing Core Disk
+  const coreDiskGeo = new THREE.CircleGeometry(12, 64);
+  const coreDiskMat = new THREE.MeshBasicMaterial({
     color: 0x00f0ff,
     transparent: true,
-    opacity: 0.7,
+    opacity: 0.6,
     side: THREE.DoubleSide,
     blending: THREE.AdditiveBlending,
   });
-
-  jetNorthMesh = new THREE.Mesh(jetGeo, jetMat);
-  jetNorthMesh.position.y = 45;
-  sagitariusAGroup.add(jetNorthMesh);
-
-  jetSouthMesh = new THREE.Mesh(jetGeo, jetMat);
-  jetSouthMesh.position.y = -45;
-  jetSouthMesh.rotation.x = Math.PI;
-  sagitariusAGroup.add(jetSouthMesh);
+  centerLightDiskMesh = new THREE.Mesh(coreDiskGeo, coreDiskMat);
+  sagitariusAGroup.add(centerLightDiskMesh);
 
   spiralGalaxyGroup.add(sagitariusAGroup);
   spiralGalaxyGroup.rotation.x = Math.PI * 0.35;
@@ -365,21 +360,21 @@ export function buildCosmicScene(scene) {
   // 4. SOLAR NEIGHBORHOOD STAR CLUSTER & SOLAR SYSTEM
   // -------------------------------------------------------------
 
-  // Solar Neighborhood Cluster surrounding the Solar System (Z = -780)
+  // Solar Neighborhood Cluster surrounding the Solar System (Z = -780, ONLY visible after cameraZ < -650)
   solarClusterGroup = new THREE.Group();
   solarClusterGroup.position.set(45, 20, -780);
   const solarClusterPoints = create3DStarCluster(900, 80, 0x38bdf8);
   solarClusterGroup.add(solarClusterPoints);
-  solarClusterGroup.visible = false;
+  solarClusterGroup.visible = false; // Hidden until cameraZ < -650
   scene.add(solarClusterGroup);
   
-  // A. Sun (Z = -800)
+  // A. Sun (Z = -800) — STRICTLY LOADS ONLY AFTER ZOOMING INTO OUR CLUSTER (cameraZ < -780)
   const sunGeo = new THREE.SphereGeometry(26, 32, 32);
   const sunTex = createSunTexture();
   const sunMat = new THREE.MeshBasicMaterial({ map: sunTex });
   sunMesh = new THREE.Mesh(sunGeo, sunMat);
   sunMesh.position.set(45, 20, -800);
-  sunMesh.visible = false;
+  sunMesh.visible = false; // Hidden until cameraZ < -780
   scene.add(sunMesh);
 
   // B. Mercury (Z = -900)
@@ -402,7 +397,7 @@ export function buildCosmicScene(scene) {
   venusMesh.visible = false;
   scene.add(venusMesh);
 
-  // D. Earth & Moon Group (Z = -1100) — STRICTLY LOADS ONLY AFTER THE SUN (Z < -950)
+  // D. Earth & Moon Group (Z = -1100) — STRICTLY LOADS ONLY AFTER PASSING THE SUN (cameraZ < -950)
   earthGroup = new THREE.Group();
   earthGroup.position.set(0, 0, -1100);
 
@@ -534,6 +529,7 @@ export function buildCosmicScene(scene) {
     starField,
     distantGalaxiesGroup,
     spiralGalaxyGroup,
+    mwClustersGroup,
     solarClusterGroup,
     sunMesh,
     mercuryMesh,
@@ -578,18 +574,21 @@ export function updateCosmicScene(time, cameraZ = 300) {
     spiralGalaxyGroup.rotation.z = time * 0.05;
   }
 
-  // Sagittarius A* Black Hole Animation
+  // Milky Way Star Clusters ONLY VISIBLE AFTER ZOOMING INTO MILKY WAY (cameraZ < -450)
+  if (mwClustersGroup) mwClustersGroup.visible = cameraZ < -450;
+
+  // Sagittarius A* Light Disk Rotation
   if (accretionDiskMesh) accretionDiskMesh.rotation.z += 0.03;
-  if (jetNorthMesh) jetNorthMesh.scale.setScalar(1 + Math.sin(time * 6) * 0.08);
-  if (jetSouthMesh) jetSouthMesh.scale.setScalar(1 + Math.sin(time * 6) * 0.08);
+  if (centerLightDiskMesh) centerLightDiskMesh.scale.setScalar(1 + Math.sin(time * 4) * 0.05);
 
-  // 3. Solar Neighborhood Cluster
-  if (solarClusterGroup) solarClusterGroup.visible = cameraZ < -450 && cameraZ > -950;
+  // 3. Solar Neighborhood Cluster ONLY VISIBLE AS WE APPROACH OUR REGION (cameraZ < -650)
+  if (solarClusterGroup) solarClusterGroup.visible = cameraZ < -650 && cameraZ > -1000;
 
-  // 4. Solar System Sequential Visibility
-  if (sunMesh) sunMesh.visible = cameraZ < -550;
-  if (mercuryMesh) mercuryMesh.visible = cameraZ < -700;
-  if (venusMesh) venusMesh.visible = cameraZ < -750;
+  // 4. SOLAR SYSTEM STRICTLY LOADS ONLY AFTER ZOOMING INTO OUR CLUSTER (cameraZ < -780)
+  const afterSolarCluster = cameraZ < -780;
+  if (sunMesh) sunMesh.visible = afterSolarCluster;
+  if (mercuryMesh) mercuryMesh.visible = cameraZ < -850;
+  if (venusMesh) venusMesh.visible = cameraZ < -900;
 
   // Earth & Moon strictly load ONLY AFTER passing the Sun (cameraZ < -950)
   const afterSun = cameraZ < -950;
