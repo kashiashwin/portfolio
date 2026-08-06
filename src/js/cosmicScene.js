@@ -357,7 +357,7 @@ export function buildCosmicScene(scene) {
   scene.add(spiralGalaxyGroup);
 
   // -------------------------------------------------------------
-  // 4. SOLAR NEIGHBORHOOD STAR CLUSTER & REVOLVING SOLAR SYSTEM (All 8 Planets + Moon + Pluto)
+  // 4. SOLAR NEIGHBORHOOD STAR CLUSTER & SOLAR SYSTEM (All 8 Planets + Moon + Pluto)
   // -------------------------------------------------------------
 
   // Solar Neighborhood Cluster (Centered at Z = -750)
@@ -390,29 +390,29 @@ export function buildCosmicScene(scene) {
   sunMesh.visible = false;
   scene.add(sunMesh);
 
-  // B. Mercury (Planet 1, Revolving around Sun)
+  // B. Mercury (Planet 1, Z = -980)
   const mercuryTex = createPlanetTexture('mercury');
   mercuryMesh = new THREE.Mesh(
     new THREE.SphereGeometry(5, 32, 32),
     new THREE.MeshStandardMaterial({ map: mercuryTex, roughness: 0.8 })
   );
-  mercuryMesh.position.set(20 + 35, 5, -920);
+  mercuryMesh.position.set(14, -2, -980);
   mercuryMesh.visible = false;
   scene.add(mercuryMesh);
 
-  // C. Venus (Planet 2, Revolving around Sun)
+  // C. Venus (Planet 2, Z = -1040)
   const venusTex = createPlanetTexture('venus');
   venusMesh = new THREE.Mesh(
     new THREE.SphereGeometry(9, 32, 32),
     new THREE.MeshStandardMaterial({ map: venusTex, roughness: 0.5 })
   );
-  venusMesh.position.set(20 - 55, 5, -920);
+  venusMesh.position.set(7, 4, -1040);
   venusMesh.visible = false;
   scene.add(venusMesh);
 
-  // D. Earth & Moon Group (Planet 3, Revolving around Sun)
+  // D. Earth & Moon Group (Planet 3, Z = -1150)
   earthGroup = new THREE.Group();
-  earthGroup.position.set(20, 5, -920 + 85);
+  earthGroup.position.set(0, 0, -1150);
 
   const earthRadius = 24;
   const earthGeo = new THREE.SphereGeometry(earthRadius, 64, 64);
@@ -470,29 +470,29 @@ export function buildCosmicScene(scene) {
   earthGroup.visible = false;
   scene.add(earthGroup);
 
-  // E. Mars (Planet 4, Revolving around Sun)
+  // E. Mars (Planet 4, Z = -1270)
   const marsTex = createPlanetTexture('mars');
   marsMesh = new THREE.Mesh(
     new THREE.SphereGeometry(8, 32, 32),
     new THREE.MeshStandardMaterial({ map: marsTex, roughness: 0.7 })
   );
-  marsMesh.position.set(20 + 120, 5, -920);
+  marsMesh.position.set(28, -8, -1270);
   marsMesh.visible = false;
   scene.add(marsMesh);
 
-  // F. Jupiter (Planet 5, Revolving around Sun)
+  // F. Jupiter (Planet 5, Z = -1400)
   const jupiterTex = createPlanetTexture('jupiter');
   jupiterMesh = new THREE.Mesh(
     new THREE.SphereGeometry(32, 64, 64),
     new THREE.MeshStandardMaterial({ map: jupiterTex, roughness: 0.5 })
   );
-  jupiterMesh.position.set(20 - 165, 5, -920);
+  jupiterMesh.position.set(-40, 16, -1400);
   jupiterMesh.visible = false;
   scene.add(jupiterMesh);
 
-  // G. Saturn & Rings (Planet 6, Revolving around Sun)
+  // G. Saturn & Rings (Planet 6, Z = -1550)
   saturnGroup = new THREE.Group();
-  saturnGroup.position.set(20 + 215, 5, -920);
+  saturnGroup.position.set(40, -18, -1550);
 
   const saturnTex = createPlanetTexture('saturn');
   saturnMesh = new THREE.Mesh(
@@ -516,33 +516,33 @@ export function buildCosmicScene(scene) {
   saturnGroup.visible = false;
   scene.add(saturnGroup);
 
-  // H. Uranus (Planet 7, Revolving around Sun)
+  // H. Uranus (Planet 7, Z = -1680)
   const uranusTex = createPlanetTexture('uranus');
   uranusMesh = new THREE.Mesh(
     new THREE.SphereGeometry(15, 32, 32),
     new THREE.MeshStandardMaterial({ map: uranusTex, roughness: 0.4 })
   );
-  uranusMesh.position.set(20 - 265, 5, -920);
+  uranusMesh.position.set(-30, -12, -1680);
   uranusMesh.visible = false;
   scene.add(uranusMesh);
 
-  // I. Neptune (Planet 8, Revolving around Sun)
+  // I. Neptune (Planet 8, Z = -1800)
   const neptuneTex = createPlanetTexture('neptune');
   neptuneMesh = new THREE.Mesh(
     new THREE.SphereGeometry(14, 32, 32),
     new THREE.MeshStandardMaterial({ map: neptuneTex, roughness: 0.4 })
   );
-  neptuneMesh.position.set(20 + 315, 5, -920);
+  neptuneMesh.position.set(35, 10, -1800);
   neptuneMesh.visible = false;
   scene.add(neptuneMesh);
 
-  // J. Dwarf Planet Pluto (Revolving around Sun)
+  // J. Dwarf Planet Pluto (Z = -1920)
   const plutoTex = createPlanetTexture('pluto');
   plutoMesh = new THREE.Mesh(
     new THREE.SphereGeometry(4.5, 32, 32),
     new THREE.MeshStandardMaterial({ map: plutoTex, roughness: 0.9 })
   );
-  plutoMesh.position.set(20 - 365, 5, -920);
+  plutoMesh.position.set(-18, 6, -1920);
   plutoMesh.visible = false;
   scene.add(plutoMesh);
 
@@ -610,27 +610,20 @@ export function updateCosmicScene(time, cameraZ = 300) {
 
   // 4. SOLAR SYSTEM STRICTLY LOADS ONLY AFTER MOVING FORWARD PAST THE CLUSTER (cameraZ < -860)
   const afterMovingPastCluster = cameraZ < -860;
-  const sunX = 20;
-  const sunY = 5;
-  const sunZ = -920;
 
   if (sunMesh) {
     sunMesh.visible = afterMovingPastCluster;
     sunMesh.rotation.y = time * 0.1;
   }
 
-  // 3D PLANET ORBITAL REVOLUTIONS AROUND THE SUN
+  // Static 3D Planets (Rotating on own axis as camera zooms past)
   if (mercuryMesh) {
     mercuryMesh.visible = cameraZ < -920;
-    mercuryMesh.position.x = sunX + Math.cos(time * 1.6) * 35;
-    mercuryMesh.position.z = sunZ + Math.sin(time * 1.6) * 35;
     mercuryMesh.rotation.y = time * 0.5;
   }
 
   if (venusMesh) {
     venusMesh.visible = cameraZ < -950;
-    venusMesh.position.x = sunX + Math.cos(time * 1.2) * 55;
-    venusMesh.position.z = sunZ + Math.sin(time * 1.2) * 55;
     venusMesh.rotation.y = time * 0.4;
   }
 
@@ -638,8 +631,6 @@ export function updateCosmicScene(time, cameraZ = 300) {
   const afterSun = cameraZ < -1000;
   if (earthGroup) {
     earthGroup.visible = afterSun;
-    earthGroup.position.x = sunX + Math.cos(time * 0.8) * 85;
-    earthGroup.position.z = sunZ + Math.sin(time * 0.8) * 85;
   }
 
   // Moon orbit animation around Earth
@@ -650,46 +641,34 @@ export function updateCosmicScene(time, cameraZ = 300) {
     moonMesh.rotation.y = time * 0.5;
   }
 
-  // Outer planets orbital revolutions around the Sun
+  // Outer planets static position & axial rotation
   if (marsMesh) {
     marsMesh.visible = cameraZ < -1050;
-    marsMesh.position.x = sunX + Math.cos(time * 0.6) * 120;
-    marsMesh.position.z = sunZ + Math.sin(time * 0.6) * 120;
     marsMesh.rotation.y = time * 0.4;
   }
 
   if (jupiterMesh) {
     jupiterMesh.visible = cameraZ < -1150;
-    jupiterMesh.position.x = sunX + Math.cos(time * 0.45) * 165;
-    jupiterMesh.position.z = sunZ + Math.sin(time * 0.45) * 165;
     jupiterMesh.rotation.y = time * 0.3;
   }
 
   if (saturnGroup) {
     saturnGroup.visible = cameraZ < -1250;
-    saturnGroup.position.x = sunX + Math.cos(time * 0.35) * 215;
-    saturnGroup.position.z = sunZ + Math.sin(time * 0.35) * 215;
     saturnGroup.rotation.y = time * 0.25;
   }
 
   if (uranusMesh) {
     uranusMesh.visible = cameraZ < -1350;
-    uranusMesh.position.x = sunX + Math.cos(time * 0.25) * 265;
-    uranusMesh.position.z = sunZ + Math.sin(time * 0.25) * 265;
     uranusMesh.rotation.y = time * 0.2;
   }
 
   if (neptuneMesh) {
     neptuneMesh.visible = cameraZ < -1450;
-    neptuneMesh.position.x = sunX + Math.cos(time * 0.18) * 315;
-    neptuneMesh.position.z = sunZ + Math.sin(time * 0.18) * 315;
     neptuneMesh.rotation.y = time * 0.18;
   }
 
   if (plutoMesh) {
     plutoMesh.visible = cameraZ < -1550;
-    plutoMesh.position.x = sunX + Math.cos(time * 0.12) * 365;
-    plutoMesh.position.z = sunZ + Math.sin(time * 0.12) * 365;
     plutoMesh.rotation.y = time * 0.15;
   }
 
