@@ -1,7 +1,7 @@
 /**
  * Procedural Web Audio API Sound Synthesizer for 3D Cosmic Zoom.
  * Generates a subtle, ambient "Space Warp / Soft Whoosh" sound effect.
- * Automatically STOPS after Earth loads (camera.position.z <= -980).
+ * Automatically STOPS at the very start (camera.position.z >= 270 / scrollY <= 40) AND after Earth loads (camera.position.z <= -980).
  */
 
 let audioCtx = null;
@@ -37,12 +37,15 @@ function createNoiseBuffer(ctx, duration = 0.4) {
 
 /**
  * Triggers a subtle, ambient sci-fi whoosh sound effect on scroll zoom
- * Automatically SILENT once Earth loads (camera.position.z <= -980)
+ * Automatically SILENT at the very start (camera.position.z >= 270) AND after Earth loads (camera.position.z <= -980)
  */
 export function playWhooshSound(intensity = 1.0) {
   if (!soundEnabled) return;
-  // Stop SFX after Earth loads (camera.position.z <= -980)
-  if (activeCamera && activeCamera.position.z <= -980) return;
+
+  // Stop SFX at the very start OR after Earth loads
+  const isAtVeryStart = window.scrollY <= 40 || (activeCamera && activeCamera.position.z >= 270);
+  const isPastEarth = activeCamera && activeCamera.position.z <= -980;
+  if (isAtVeryStart || isPastEarth) return;
 
   const ctx = getAudioContext();
   if (!ctx) return;
@@ -106,8 +109,10 @@ export function initAudioScrollTrigger(camera) {
   activeCamera = camera;
 
   const triggerCheck = (delta) => {
-    // Stop SFX after Earth loads (camera.position.z <= -980)
-    if (activeCamera && activeCamera.position.z <= -980) return;
+    // Stop SFX at the very start OR after Earth loads
+    const isAtVeryStart = window.scrollY <= 40 || (activeCamera && activeCamera.position.z >= 270);
+    const isPastEarth = activeCamera && activeCamera.position.z <= -980;
+    if (isAtVeryStart || isPastEarth) return;
 
     const zoomSpace = document.getElementById('cosmic-zoom-space');
     if (zoomSpace) {
