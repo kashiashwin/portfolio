@@ -16,8 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // 3. Initialize GSAP ScrollTrigger Animation Timeline (Manual user scroll)
   initScrollAnimation(camera, sceneObjects);
 
-  // 4. Initialize Web Audio API Whoosh Sound Effect on Scroll Zoom
-  initAudioScrollTrigger();
+  // 4. Initialize Web Audio API Whoosh Sound Effect on Scroll Zoom (Stops after Earth loads)
+  initAudioScrollTrigger(camera);
 
   // 5. Mobile Hamburger Menu Toggle & Sleek Animations
   const menuBtn = document.getElementById('mobile-menu-btn');

@@ -1,12 +1,14 @@
 /**
  * Procedural Web Audio API Sound Synthesizer for 3D Cosmic Zoom.
  * Generates an epic, futuristic "Space Warp / Hyperdrive Whoosh" sound effect without external audio files.
+ * Automatically STOPS after Earth loads (camera.position.z <= -980).
  */
 
 let audioCtx = null;
 let lastScrollY = window.scrollY;
 let lastSoundTime = 0;
 let soundEnabled = true;
+let activeCamera = null;
 
 export function getAudioContext() {
   if (!audioCtx) {
@@ -35,9 +37,13 @@ function createNoiseBuffer(ctx, duration = 0.5) {
 
 /**
  * Triggers an epic sci-fi whoosh sound effect on scroll zoom
+ * Automatically SILENT once Earth loads (camera.position.z <= -980)
  */
 export function playWhooshSound(intensity = 1.0) {
   if (!soundEnabled) return;
+  // Stop SFX after Earth loads (camera.position.z <= -980)
+  if (activeCamera && activeCamera.position.z <= -980) return;
+
   const ctx = getAudioContext();
   if (!ctx) return;
 
@@ -118,8 +124,13 @@ export function playWhooshSound(intensity = 1.0) {
 }
 
 // Global listener to trigger whoosh sound on mouse wheel, touch, and scroll velocity
-export function initAudioScrollTrigger() {
+export function initAudioScrollTrigger(camera) {
+  activeCamera = camera;
+
   const triggerCheck = (delta) => {
+    // Stop SFX after Earth loads (camera.position.z <= -980)
+    if (activeCamera && activeCamera.position.z <= -980) return;
+
     const zoomSpace = document.getElementById('cosmic-zoom-space');
     if (zoomSpace) {
       const rect = zoomSpace.getBoundingClientRect();
