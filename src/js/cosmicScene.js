@@ -301,7 +301,7 @@ export function buildCosmicScene(scene) {
   const galaxyPoints = new THREE.Points(galaxyGeo, galaxyMat);
   spiralGalaxyGroup.add(galaxyPoints);
 
-  // STAR CLUSTERS INSIDE MILKY WAY (Only visible AFTER zooming into Milky Way: cameraZ < -450)
+  // STAR CLUSTERS INSIDE MILKY WAY (Strictly load ONLY AFTER completely inside the galaxy: cameraZ < -550)
   mwClustersGroup = new THREE.Group();
   const mwClusters = [
     { color: 0x00f0ff, r: 50, angle: 0.4 },
@@ -314,7 +314,7 @@ export function buildCosmicScene(scene) {
     cluster.position.set(Math.cos(cl.angle) * cl.r, Math.sin(cl.angle) * cl.r, (Math.random() - 0.5) * 10);
     mwClustersGroup.add(cluster);
   });
-  mwClustersGroup.visible = false; // Strictly hidden until cameraZ < -450
+  mwClustersGroup.visible = false; // Strictly hidden until cameraZ < -550 (Inside Milky Way completely)
   spiralGalaxyGroup.add(mwClustersGroup);
 
   // SAGITTARIUS A* SUPERMASSIVE BLACK HOLE LIGHT DISK (Center of Galaxy)
@@ -374,7 +374,7 @@ export function buildCosmicScene(scene) {
   const sunMat = new THREE.MeshBasicMaterial({ map: sunTex });
   sunMesh = new THREE.Mesh(sunGeo, sunMat);
   sunMesh.position.set(45, 20, -800);
-  sunMesh.visible = false; // Hidden until cameraZ < -780
+  sunMesh.visible = false; // Hidden until cameraZ < -780 (After zooming into our cluster)
   scene.add(sunMesh);
 
   // B. Mercury (Z = -900)
@@ -574,14 +574,14 @@ export function updateCosmicScene(time, cameraZ = 300) {
     spiralGalaxyGroup.rotation.z = time * 0.05;
   }
 
-  // Milky Way Star Clusters ONLY VISIBLE AFTER ZOOMING INTO MILKY WAY (cameraZ < -450)
-  if (mwClustersGroup) mwClustersGroup.visible = cameraZ < -450;
+  // Milky Way Star Clusters STRICTLY LOAD ONLY AFTER WE ARE COMPLETELY INSIDE THE GALAXY (cameraZ < -550)
+  if (mwClustersGroup) mwClustersGroup.visible = cameraZ < -550;
 
   // Sagittarius A* Light Disk Rotation
   if (accretionDiskMesh) accretionDiskMesh.rotation.z += 0.03;
   if (centerLightDiskMesh) centerLightDiskMesh.scale.setScalar(1 + Math.sin(time * 4) * 0.05);
 
-  // 3. Solar Neighborhood Cluster ONLY VISIBLE AS WE APPROACH OUR REGION (cameraZ < -650)
+  // 3. Solar Neighborhood Cluster ONLY VISIBLE AS WE ENTER OUR SPECIFIC CLUSTER (cameraZ < -650)
   if (solarClusterGroup) solarClusterGroup.visible = cameraZ < -650 && cameraZ > -1000;
 
   // 4. SOLAR SYSTEM STRICTLY LOADS ONLY AFTER ZOOMING INTO OUR CLUSTER (cameraZ < -780)

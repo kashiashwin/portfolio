@@ -82,7 +82,7 @@ export function initScrollAnimation(camera, sceneObjects) {
   }, null, 'phase1+=1');
 
   // -------------------------------------------------------------
-  // PHASE 2: Zoom Through Milky Way Spiral Galaxy (Z = -350 to -750)
+  // PHASE 2: Completely Enter Milky Way & Zoom Into Our Star Cluster (Z = -350 to -750)
   // -------------------------------------------------------------
   mainTimeline.to(camera.position, {
     z: -750,
@@ -95,12 +95,12 @@ export function initScrollAnimation(camera, sceneObjects) {
   mainTimeline.call(() => {
     const hudStatus = document.getElementById('hud-status');
     const hudTarget = document.getElementById('hud-target');
-    if (hudStatus) hudStatus.innerText = 'HUD: PHASE 2 • MILKY WAY';
-    if (hudTarget) hudTarget.innerText = 'TARGET: SOLAR SYSTEM';
+    if (hudStatus) hudStatus.innerText = 'HUD: PHASE 2 • INSIDE MILKY WAY GALAXY';
+    if (hudTarget) hudTarget.innerText = 'TARGET: OUR STAR CLUSTER';
   }, null, 'phase2+=1');
 
   // -------------------------------------------------------------
-  // PHASE 3: Sun -> Mercury -> Venus -> Earth & Moon (Z = -750 to -1100)
+  // PHASE 3: Zoom Into Our Cluster & Solar System -> Earth & Moon (Z = -750 to -1068)
   // -------------------------------------------------------------
   mainTimeline.to(camera.position, {
     z: -1068,
@@ -113,38 +113,12 @@ export function initScrollAnimation(camera, sceneObjects) {
   mainTimeline.call(() => {
     const hudStatus = document.getElementById('hud-status');
     const hudTarget = document.getElementById('hud-target');
-    if (hudStatus) hudStatus.innerText = 'HUD: PHASE 3 • SOLAR SYSTEM';
-    if (hudTarget) hudTarget.innerText = 'TARGET: EARTH (CUCEK)';
+    if (hudStatus) hudStatus.innerText = 'HUD: PHASE 3 • INSIDE OUR CLUSTER';
+    if (hudTarget) hudTarget.innerText = 'TARGET: SOLAR SYSTEM & EARTH';
   }, null, 'phase3+=1');
 
   mainTimeline.to('#cosmic-hud-overlay', {
     opacity: 0,
     duration: 1,
-  }, 'phase3+=3');
-
-  // -------------------------------------------------------------
-  // PHASE 4: Developer Profile & UI Reveal
-  // -------------------------------------------------------------
-  gsap.utils.toArray('.scroll-reveal').forEach((section) => {
-    gsap.fromTo(
-      section,
-      { opacity: 0, y: 60 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 1,
-        ease: 'power2.out',
-        scrollTrigger: {
-          trigger: section,
-          start: 'top 80%',
-          end: 'top 30%',
-          toggleActions: 'play none none reverse',
-        },
-      }
-    );
-  });
-
-  window.addEventListener('resize', () => {
-    ScrollTrigger.refresh();
-  });
+  }, 'phase3+=4');
 }
