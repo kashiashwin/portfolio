@@ -80,14 +80,68 @@ document.addEventListener('DOMContentLoaded', () => {
   // 7. Initialize Projects Modal Gallery
   initProjectsModal();
 
-  // 8. Contact Form Handler
+  // 8. Contact Form Handler (FormSubmit integration to ashwinkashi897@gmail.com)
   const contactForm = document.getElementById('contact-form');
+  const contactStatus = document.getElementById('contact-form-status');
+  const submitBtn = document.getElementById('contact-submit-btn');
+
+  function showStatus(msg, isSuccess) {
+    if (!contactStatus) return;
+    contactStatus.classList.remove('hidden', 'bg-cyan-500/20', 'border-cyan-500/40', 'text-cyan-300', 'bg-rose-500/20', 'border-rose-500/40', 'text-rose-300');
+    if (isSuccess) {
+      contactStatus.classList.add('bg-cyan-500/20', 'border', 'border-cyan-500/40', 'text-cyan-300');
+    } else {
+      contactStatus.classList.add('bg-rose-500/20', 'border', 'border-rose-500/40', 'text-rose-300');
+    }
+    contactStatus.innerText = msg;
+  }
+
   if (contactForm) {
-    contactForm.addEventListener('submit', (e) => {
+    contactForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = document.getElementById('contact-name').value;
-      alert(`Thank you ${name}! Your message has been sent successfully. Ashwin will get back to you shortly.`);
-      contactForm.reset();
+      const email = document.getElementById('contact-email').value;
+      const subject = document.getElementById('contact-subject').value;
+      const message = document.getElementById('contact-message').value;
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Sending Email... 🚀';
+      }
+
+      showStatus('Sending your message directly to ashwinkashi897@gmail.com...', true);
+
+      try {
+        const response = await fetch('https://formsubmit.co/ajax/ashwinkashi897@gmail.com', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            _subject: `[Portfolio Collaboration] ${subject}`,
+            message,
+          })
+        });
+
+        if (response.ok) {
+          showStatus('✨ Message sent successfully! Ashwin will receive your email at ashwinkashi897@gmail.com shortly.', true);
+          contactForm.reset();
+        } else {
+          showStatus('⚠️ Direct dispatch failed. Opening your default mail client...', false);
+          window.location.href = `mailto:ashwinkashi897@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`)}`;
+        }
+      } catch (err) {
+        showStatus('⚠️ Opening default email client...', false);
+        window.location.href = `mailto:ashwinkashi897@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`)}`;
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Send Message to Ashwin\'s Email →';
+        }
+      }
     });
   }
 
